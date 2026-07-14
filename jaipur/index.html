@@ -1470,7 +1470,7 @@
                 <div class="fn-en">Wedding</div>
                 <div class="fn-meta">Sun 1st Nov &middot; 8:30 AM onwards</div>
               </div>
-              <div class="fn-actions"><button class="fn-cal" data-file="Kalyanam" data-title="Kalyanam (Wedding) &mdash; Shweta &amp; Swarnim" data-start="20261101T030000Z" data-end="20261101T081500Z" data-loc="The Vintage Aarone Farms, Delhi" data-desc="Wedding celebrations of Shweta &amp; Swarnim. https://swarnimiyer.github.io/wedding/jaipur/">&#128197; iCal</button><a class="fn-gcal" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=Kalyanam+%28Wedding%29+%E2%80%94+Shweta+%26+Swarnim&amp;dates=20261101T030000Z%2F20261101T081500Z&amp;location=The+Vintage+Aarone+Farms%2C+Delhi&amp;details=Wedding+celebrations+of+Shweta+%26+Swarnim" target="_blank" rel="noopener">&#128197; Google</a></div>
+              <button class="fn-cal" data-file="Kalyanam" data-title="Kalyanam (Wedding) &mdash; Shweta &amp; Swarnim" data-start="20261101T030000Z" data-end="20261101T081500Z" data-loc="The Vintage Aarone Farms, Delhi" data-desc="Wedding celebrations of Shweta &amp; Swarnim. https://swarnimiyer.github.io/wedding/jaipur/">&#128197; Add to calendar</button>
             </div>
 
             <div class="venue-foot">
@@ -1486,7 +1486,7 @@
                 <div class="fn-name">Reception</div>
                 <div class="fn-meta">Tue 3rd Nov &middot; 7:30 PM onwards</div>
               </div>
-              <div class="fn-actions"><button class="fn-cal" data-file="Reception-Jaipur" data-title="Reception (Jaipur) &mdash; Shweta &amp; Swarnim" data-start="20261103T140000Z" data-end="20261103T170000Z" data-loc="Gautam Garden, Jaipur" data-desc="Wedding celebrations of Shweta &amp; Swarnim. https://swarnimiyer.github.io/wedding/jaipur/">&#128197; iCal</button><a class="fn-gcal" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=Reception+%28Jaipur%29+%E2%80%94+Shweta+%26+Swarnim&amp;dates=20261103T140000Z%2F20261103T170000Z&amp;location=Gautam+Garden%2C+Jaipur&amp;details=Wedding+celebrations+of+Shweta+%26+Swarnim" target="_blank" rel="noopener">&#128197; Google</a></div>
+              <button class="fn-cal" data-file="Reception-Jaipur" data-title="Reception (Jaipur) &mdash; Shweta &amp; Swarnim" data-start="20261103T140000Z" data-end="20261103T170000Z" data-loc="Gautam Garden, Jaipur" data-desc="Wedding celebrations of Shweta &amp; Swarnim. https://swarnimiyer.github.io/wedding/jaipur/">&#128197; Add to calendar</button>
             </div>
 
             <div class="venue-foot">
@@ -2286,15 +2286,14 @@
     setTimeout(()=>{ var iv=setInterval(()=>{ const c=calc(); if(c.done){ markDone(); clearInterval(iv); return; } setFlip(dB,dV,String(c.d)); setFlip(hB,hV,String(c.h).padStart(2,'0')); setFlip(mB,mV,String(c.m).padStart(2,'0')); },1000); },3600);
   }
 
-  /* ===== ADD TO CALENDAR (per-function .ics) ===== */
-  function downloadICS(btn){
+  /* ===== ADD TO CALENDAR (device-aware: Apple Calendar on iOS, Google Calendar elsewhere) ===== */
+  function _icsFor(d){
     function esc(t){ return ('' + t).split('\\').join('\\\\').split(';').join('\;').split(',').join('\\,'); }
-    var d = btn.dataset;
-    var ics = [
+    return [
       'BEGIN:VCALENDAR','VERSION:2.0',
       'PRODID:-//Shweta and Swarnim//Wedding Invitation//EN',
       'CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT',
-      'UID:' + d.file.toLowerCase() + '-swarnim-shweta@swarnimiyer.github.io',
+      'UID:' + (d.file||'event').toLowerCase() + '-shweta-swarnim@swarnimiyer.github.io',
       'DTSTAMP:20260612T000000Z',
       'DTSTART:' + d.start,
       'DTEND:' + d.end,
@@ -2303,17 +2302,31 @@
       'DESCRIPTION:' + esc(d.desc),
       'END:VEVENT','END:VCALENDAR'
     ].join('\r\n');
-    var blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url; a.download = d.file + '.ics';
-    document.body.appendChild(a); a.click();
-    setTimeout(function(){ a.remove(); URL.revokeObjectURL(url); }, 200);
+  }
+  function _gcalFor(d){
+    var q = new URLSearchParams({
+      action:'TEMPLATE', text:(d.title||''), dates:(d.start||'')+'/'+(d.end||''),
+      location:(d.loc||''), details:(d.desc||'')
+    });
+    return 'https://calendar.google.com/calendar/render?' + q.toString();
+  }
+  function addToCalendar(btn){
+    var d = btn.dataset;
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+              || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if(isIOS){
+      /* hand iOS a text/calendar payload it opens in Apple Calendar */
+      window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(_icsFor(d));
+      showToast('Opening Apple Calendar…');
+    } else {
+      window.open(_gcalFor(d), '_blank', 'noopener');
+      showToast('Opening Google Calendar…');
+    }
   }
   document.querySelectorAll('.fn-cal').forEach(function(b){
     b.addEventListener('click', function(e){
       e.preventDefault(); e.stopPropagation();
-      downloadICS(b); showToast('Calendar event downloaded');
+      addToCalendar(b);
     });
   });
 

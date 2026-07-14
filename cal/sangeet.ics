@@ -1,0 +1,15 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Shweta and Swarnim//Wedding Invitation//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:sangeet-shweta-swarnim@swarnimiyer.github.io
+DTSTAMP:20260612T000000Z
+DTSTART:20261031T130000Z
+DTEND:20261031T190000Z
+SUMMARY:Sangeet & Reception — Shweta & Swarnim
+LOCATION:The Vintage Aarone Farms\, Delhi
+DESCRIPTION:Wedding celebrations of Shweta & Swarnim. https://swarnimiyer.github.io/wedding/
+END:VEVENT
+END:VCALENDAR

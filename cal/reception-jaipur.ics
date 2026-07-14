@@ -1,0 +1,15 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Shweta and Swarnim//Wedding Invitation//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:reception-jaipur-shweta-swarnim@swarnimiyer.github.io
+DTSTAMP:20260612T000000Z
+DTSTART:20261103T140000Z
+DTEND:20261103T170000Z
+SUMMARY:Reception (Jaipur) — Shweta & Swarnim
+LOCATION:Gautam Garden\, Jaipur
+DESCRIPTION:Wedding celebrations of Shweta & Swarnim. https://swarnimiyer.github.io/wedding/
+END:VEVENT
+END:VCALENDAR

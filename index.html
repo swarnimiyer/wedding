@@ -1468,7 +1468,7 @@
                 <div class="fn-en">Engagement</div>
                 <div class="fn-meta">Sat 31st Oct &middot; 12:30 PM onwards</div>
               </div>
-              <button class="fn-cal" data-file="Nischitartham" data-title="Nischitartham (Engagement) &mdash; Shweta &amp; Swarnim" data-start="20261031T070000Z" data-end="20261031T080000Z" data-loc="The Vintage Aarone Farms, Delhi" data-desc="Wedding celebrations of Shweta &amp; Swarnim. https://swarnimiyer.github.io/wedding/">&#128197; Add to calendar</button>
+              <button class="fn-cal" data-file="Nischitartham" data-title="Nischitartham (Engagement) &mdash; Shweta &amp; Swarnim" data-start="20261031T070000Z" data-end="20261031T080000Z" data-loc="The Vintage Aarone Farms, Delhi" data-desc="Wedding celebrations of Shweta &amp; Swarnim. https://swarnimiyer.github.io/wedding/">&#128197; Add</button>
             </div>
 
             <div class="function-row">
@@ -1477,7 +1477,7 @@
                 <div class="fn-name">Sangeet &amp; Reception</div>
                 <div class="fn-meta">Sat 31st Oct &middot; 6:30 PM onwards</div>
               </div>
-              <button class="fn-cal" data-file="Sangeet" data-title="Sangeet &amp; Reception &mdash; Shweta &amp; Swarnim" data-start="20261031T130000Z" data-end="20261031T190000Z" data-loc="The Vintage Aarone Farms, Delhi" data-desc="Wedding celebrations of Shweta &amp; Swarnim. https://swarnimiyer.github.io/wedding/">&#128197; Add to calendar</button>
+              <button class="fn-cal" data-file="Sangeet" data-title="Sangeet &amp; Reception &mdash; Shweta &amp; Swarnim" data-start="20261031T130000Z" data-end="20261031T190000Z" data-loc="The Vintage Aarone Farms, Delhi" data-desc="Wedding celebrations of Shweta &amp; Swarnim. https://swarnimiyer.github.io/wedding/">&#128197; Add</button>
             </div>
 
             <div class="function-row">
@@ -1487,7 +1487,7 @@
                 <div class="fn-en">Wedding</div>
                 <div class="fn-meta">Sun 1st Nov &middot; 8:30 AM onwards</div>
               </div>
-              <button class="fn-cal" data-file="Kalyanam" data-title="Kalyanam (Wedding) &mdash; Shweta &amp; Swarnim" data-start="20261101T030000Z" data-end="20261101T081500Z" data-loc="The Vintage Aarone Farms, Delhi" data-desc="Wedding celebrations of Shweta &amp; Swarnim. https://swarnimiyer.github.io/wedding/">&#128197; Add to calendar</button>
+              <button class="fn-cal" data-file="Kalyanam" data-title="Kalyanam (Wedding) &mdash; Shweta &amp; Swarnim" data-start="20261101T030000Z" data-end="20261101T081500Z" data-loc="The Vintage Aarone Farms, Delhi" data-desc="Wedding celebrations of Shweta &amp; Swarnim. https://swarnimiyer.github.io/wedding/">&#128197; Add</button>
             </div>
 
             <div class="venue-foot">
@@ -1503,7 +1503,7 @@
                 <div class="fn-name">Reception</div>
                 <div class="fn-meta">Tue 3rd Nov &middot; 7:30 PM onwards</div>
               </div>
-              <button class="fn-cal" data-file="Reception-Jaipur" data-title="Reception (Jaipur) &mdash; Shweta &amp; Swarnim" data-start="20261103T140000Z" data-end="20261103T170000Z" data-loc="Gautam Garden, Jaipur" data-desc="Wedding celebrations of Shweta &amp; Swarnim. https://swarnimiyer.github.io/wedding/">&#128197; Add to calendar</button>
+              <button class="fn-cal" data-file="Reception-Jaipur" data-title="Reception (Jaipur) &mdash; Shweta &amp; Swarnim" data-start="20261103T140000Z" data-end="20261103T170000Z" data-loc="Gautam Garden, Jaipur" data-desc="Wedding celebrations of Shweta &amp; Swarnim. https://swarnimiyer.github.io/wedding/">&#128197; Add</button>
             </div>
 
             <div class="venue-foot">
@@ -2401,7 +2401,7 @@
               || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     if(isIOS){
       /* hand iOS a text/calendar payload it opens in Apple Calendar */
-      window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(_icsFor(d));
+      window.location.href = 'https://swarnimiyer.github.io/wedding/cal/' + (d.file||'event').toLowerCase() + '.ics';
       showToast('Opening Apple Calendar…');
     } else {
       window.open(_gcalFor(d), '_blank', 'noopener');

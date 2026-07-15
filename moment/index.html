@@ -44,6 +44,9 @@ body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,#FBF3D
 .tile-foot{display:flex;justify-content:flex-end;gap:12px;padding:0 11px 8px;}
 .tile.is-hidden{opacity:.5;}
 .hidden-chip{position:absolute;top:8px;left:8px;background:var(--maroon);color:var(--cream);font-family:'Cinzel',serif;font-size:8px;letter-spacing:.16em;text-transform:uppercase;padding:3px 8px;border-radius:12px;z-index:2;}
+.hidden-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:120px;padding:22px 12px;background:repeating-linear-gradient(45deg,#f3e9d4,#f3e9d4 10px,#efe2c8 10px,#efe2c8 20px);color:var(--maroon);font-style:italic;font-size:14px;text-align:center;}
+.hidden-ph .ph-x{font-size:22px;}
+.hidden-ph small{opacity:.7;font-size:11px;}
 .mini{background:none;border:0;cursor:pointer;font-family:'Cinzel',serif;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(92,58,107,.55);padding:0;}
 .mini:hover{color:var(--maroon);}
 .mini.hidebtn{color:var(--maroon);font-weight:600;}
@@ -151,6 +154,13 @@ input[type=file]{display:none;}
     <div class="sub" id="failMsg">The signal here can be patchy &mdash; your photo is still ready.</div>
     <button class="btn" id="btnRetry">Try again</button>
   </div>
+
+  <div id="s-limit" class="hide">
+    <div class="flourish">&#128155;</div>
+    <h1>You&rsquo;ve shared today</h1>
+    <div class="sub">Thank you! To keep the wall full of variety it&rsquo;s one moment per day &mdash; do come back tomorrow with another.</div>
+    <button class="btn" id="btnLimitWall">Browse the wall</button>
+  </div>
  </div>
 </div>
 
@@ -168,9 +178,15 @@ input[type=file]{display:none;}
   var pending=null;
   var $=function(id){return document.getElementById(id);};
 
+  // Soft one-upload-per-device limit (kiosk bypasses). LIMIT_MODE: 'day' | 'once' | 'off'
+  var LIMIT_MODE='day';
+  function limitKey(){ return LIMIT_MODE==='day' ? ('mw_up_'+today()) : 'mw_up'; }
+  function limitReached(){ if(KIOSK||LIMIT_MODE==='off') return false; try{ return localStorage.getItem(limitKey())==='1'; }catch(_){ return false; } }
+  function markUploaded(){ try{ localStorage.setItem(limitKey(),'1'); }catch(_){} }
+
   /* ---------- uploader show/hide ---------- */
-  function ustate(id){ ['s-intro','s-preview','s-up','s-thanks','s-fail'].forEach(function(x){ $(x).classList.toggle('hide', x!==id); }); }
-  function openUploader(){ $('uploader').classList.remove('hide'); ustate('s-intro'); }
+  function ustate(id){ ['s-intro','s-preview','s-up','s-thanks','s-fail','s-limit'].forEach(function(x){ $(x).classList.toggle('hide', x!==id); }); }
+  function openUploader(){ $('uploader').classList.remove('hide'); ustate(limitReached()?'s-limit':'s-intro'); }
   function closeUploader(){ $('uploader').classList.add('hide'); pending=null; $('fileLib').value=''; $('fileCam').value=''; }
   $('addTop').addEventListener('click',openUploader);
   $('fab').addEventListener('click',openUploader);
@@ -189,16 +205,25 @@ input[type=file]{display:none;}
     $('empty').classList.add('hide');
     $('count').textContent=photos.length+(photos.length===1?' moment shared':' moments shared');
     photos.forEach(function(p){
+      var fig=document.createElement('figure'); fig.setAttribute('data-id',p.id);
+      if(ADMIN && p.hidden){                       // admin sees a placeholder (file access is revoked while hidden)
+        fig.className='tile is-hidden';
+        fig.innerHTML=
+          '<div class="hidden-ph"><span class="ph-x">&#128683;</span>Hidden from the wall<small>image access revoked</small></div>'+
+          '<figcaption><span class="who">&mdash; '+esc(p.name)+'</span></figcaption>'+
+          '<div class="tile-foot"><button class="mini hidebtn">Unhide</button></div>';
+        fig.querySelector('.hidebtn').addEventListener('click',function(){ toggleHide(p); });
+        grid.appendChild(fig); return;
+      }
       var on=liked(p.id);
-      var fig=document.createElement('figure'); fig.className='tile'+((ADMIN&&p.hidden)?' is-hidden':''); fig.setAttribute('data-id',p.id);
+      fig.className='tile';
       fig.innerHTML=
-        ((ADMIN&&p.hidden)?'<span class="hidden-chip">Hidden</span>':'')+
         '<img loading="lazy" src="'+thumb(p.id,700)+'" alt="Moment from '+esc(p.name)+'">'+
         '<figcaption><span class="who">&mdash; '+esc(p.name)+'</span>'+
           '<button class="heart'+(on?' on':'')+'" aria-label="Like"><span class="h">&#9829;</span><span class="cnt">'+(p.likes||0)+'</span></button>'+
         '</figcaption>'+
         '<div class="tile-foot">'+
-          (ADMIN?('<button class="mini hidebtn">'+(p.hidden?'Unhide':'Hide')+'</button>'):'')+
+          (ADMIN?'<button class="mini hidebtn">Hide</button>':'')+
           '<button class="mini reportbtn">Report</button>'+
         '</div>';
       var imgEl=fig.querySelector('img');
@@ -281,7 +306,7 @@ input[type=file]{display:none;}
       var resp=await fetch(ENDPOINT,{method:'POST',body:payload});
       var outp=await resp.json();
       if(!outp.ok) throw new Error(outp.error||'server');
-      ustate('s-thanks');
+      ustate('s-thanks'); markUploaded();
       if(KIOSK) setTimeout(function(){ closeUploader(); loadWall(); },6000);
     }catch(err){ ustate('s-fail'); }
   }
@@ -291,7 +316,8 @@ input[type=file]{display:none;}
   $('btnRetry').addEventListener('click',send);
   $('btnRedo').addEventListener('click',function(){ pending=null; $('fileLib').value=''; $('fileCam').value=''; ustate('s-intro'); });
   $('btnBackWall').addEventListener('click',function(){ closeUploader(); loadWall(); });
-  $('btnAgain').addEventListener('click',function(){ pending=null; $('fileLib').value=''; $('fileCam').value=''; ustate('s-intro'); });
+  $('btnAgain').addEventListener('click',function(){ pending=null; $('fileLib').value=''; $('fileCam').value=''; ustate(limitReached()?'s-limit':'s-intro'); });
+  $('btnLimitWall').addEventListener('click',function(){ closeUploader(); loadWall(); });
 
   function refresh(){
     var url=ENDPOINT+'?action=list'+(ADMIN?('&key='+encodeURIComponent(ADMIN)):'');

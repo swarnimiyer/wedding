@@ -42,6 +42,8 @@ body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,#FBF3D
 .heart.pulse .h{animation:pop .35s ease;}
 @keyframes pop{0%{transform:scale(1);}45%{transform:scale(1.5);}100%{transform:scale(1);}}
 .tile-foot{display:flex;justify-content:flex-end;gap:12px;padding:0 11px 8px;}
+.tile.is-hidden{opacity:.5;}
+.hidden-chip{position:absolute;top:8px;left:8px;background:var(--maroon);color:var(--cream);font-family:'Cinzel',serif;font-size:8px;letter-spacing:.16em;text-transform:uppercase;padding:3px 8px;border-radius:12px;z-index:2;}
 .mini{background:none;border:0;cursor:pointer;font-family:'Cinzel',serif;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(92,58,107,.55);padding:0;}
 .mini:hover{color:var(--maroon);}
 .mini.hidebtn{color:var(--maroon);font-weight:600;}
@@ -188,14 +190,15 @@ input[type=file]{display:none;}
     $('count').textContent=photos.length+(photos.length===1?' moment shared':' moments shared');
     photos.forEach(function(p){
       var on=liked(p.id);
-      var fig=document.createElement('figure'); fig.className='tile'; fig.setAttribute('data-id',p.id);
+      var fig=document.createElement('figure'); fig.className='tile'+((ADMIN&&p.hidden)?' is-hidden':''); fig.setAttribute('data-id',p.id);
       fig.innerHTML=
+        ((ADMIN&&p.hidden)?'<span class="hidden-chip">Hidden</span>':'')+
         '<img loading="lazy" src="'+thumb(p.id,700)+'" alt="Moment from '+esc(p.name)+'">'+
         '<figcaption><span class="who">&mdash; '+esc(p.name)+'</span>'+
           '<button class="heart'+(on?' on':'')+'" aria-label="Like"><span class="h">&#9829;</span><span class="cnt">'+(p.likes||0)+'</span></button>'+
         '</figcaption>'+
         '<div class="tile-foot">'+
-          (ADMIN?'<button class="mini hidebtn">Hide</button>':'')+
+          (ADMIN?('<button class="mini hidebtn">'+(p.hidden?'Unhide':'Hide')+'</button>'):'')+
           '<button class="mini reportbtn">Report</button>'+
         '</div>';
       var imgEl=fig.querySelector('img');
@@ -208,14 +211,15 @@ input[type=file]{display:none;}
       });
       fig.querySelector('.heart').addEventListener('click',function(){ toggleLike(p,this); });
       fig.querySelector('.reportbtn').addEventListener('click',function(){ report(p,fig); });
-      if(ADMIN) fig.querySelector('.hidebtn').addEventListener('click',function(){ hide(p,fig); });
+      if(ADMIN) fig.querySelector('.hidebtn').addEventListener('click',function(){ toggleHide(p); });
       grid.appendChild(fig);
     });
   }
 
   function loadWall(){
     $('wallSpin').classList.remove('hide');
-    fetch(ENDPOINT+'?action=list').then(function(r){return r.json();}).then(function(o){
+    var url=ENDPOINT+'?action=list'+(ADMIN?('&key='+encodeURIComponent(ADMIN)):'');
+    fetch(url).then(function(r){return r.json();}).then(function(o){
       render((o&&o.photos)||[]);
     }).catch(function(){ $('wallSpin').classList.add('hide'); $('empty').classList.remove('hide'); $('empty').textContent='Could not load the wall — check your connection and refresh.'; });
     if(ADMIN) $('adminBadge').classList.remove('hide');
@@ -237,13 +241,14 @@ input[type=file]{display:none;}
     var f=fig.querySelector('.reportbtn'); f.textContent='Reported ✓'; f.disabled=true;
   }
 
-  /* ---------- admin hide ---------- */
-  function hide(p,fig){
-    if(!confirm('Hide this photo from the wall?')) return;
-    fetch(ENDPOINT,{method:'POST',body:JSON.stringify({action:'hide',id:p.id,key:ADMIN})}).then(function(r){return r.json();}).then(function(o){
-      if(o&&o.ok){ fig.style.transition='opacity .3s'; fig.style.opacity='.3'; fig.querySelector('.hidebtn').textContent='Hidden'; }
+  /* ---------- admin hide / unhide ---------- */
+  function toggleHide(p){
+    var unhide=!!p.hidden;
+    if(!confirm(unhide?'Unhide this photo — it returns to the wall for everyone?':'Hide this photo from the wall?')) return;
+    fetch(ENDPOINT,{method:'POST',body:JSON.stringify({action:'hide',id:p.id,key:ADMIN,unhide:unhide})}).then(function(r){return r.json();}).then(function(o){
+      if(o&&o.ok){ loadWall(); }
       else { try{ sessionStorage.removeItem('mw_admin'); }catch(_){} alert('Wrong admin password — reload the admin link to enter it again.'); }
-    }).catch(function(){ alert('Network error hiding photo.'); });
+    }).catch(function(){ alert('Network error — please try again.'); });
   }
 
   /* ---------- lightbox ---------- */
@@ -287,6 +292,21 @@ input[type=file]{display:none;}
   $('btnRedo').addEventListener('click',function(){ pending=null; $('fileLib').value=''; $('fileCam').value=''; ustate('s-intro'); });
   $('btnBackWall').addEventListener('click',function(){ closeUploader(); loadWall(); });
   $('btnAgain').addEventListener('click',function(){ pending=null; $('fileLib').value=''; $('fileCam').value=''; ustate('s-intro'); });
+
+  function refresh(){
+    var url=ENDPOINT+'?action=list'+(ADMIN?('&key='+encodeURIComponent(ADMIN)):'');
+    fetch(url).then(function(r){return r.json();}).then(function(o){
+      var photos=(o&&o.photos)||[]; var grid=$('grid');
+      if(grid.children.length!==photos.length){ render(photos); return; }   // set changed -> full render
+      photos.forEach(function(p){
+        var fig=grid.querySelector('.tile[data-id="'+p.id+'"]');
+        if(fig){ var c=fig.querySelector('.cnt'); if(c) c.textContent=(p.likes||0); }   // show cumulative server total
+      });
+    }).catch(function(){});
+  }
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden && $('uploader').classList.contains('hide') && $('light').classList.contains('hide')) refresh();
+  });
 
   loadWall();
 })();

@@ -42,7 +42,7 @@ body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,#FBF3D
 .heart.pulse .h{animation:pop .35s ease;}
 @keyframes pop{0%{transform:scale(1);}45%{transform:scale(1.5);}100%{transform:scale(1);}}
 .tile-foot{display:flex;justify-content:flex-end;gap:12px;padding:0 11px 8px;}
-.tile.is-hidden{opacity:.5;}
+.tile.is-hidden img{filter:grayscale(1);opacity:.6;}
 .hidden-chip{position:absolute;top:8px;left:8px;background:var(--maroon);color:var(--cream);font-family:'Cinzel',serif;font-size:8px;letter-spacing:.16em;text-transform:uppercase;padding:3px 8px;border-radius:12px;z-index:2;}
 .hidden-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:120px;padding:22px 12px;background:repeating-linear-gradient(45deg,#f3e9d4,#f3e9d4 10px,#efe2c8 10px,#efe2c8 20px);color:var(--maroon);font-style:italic;font-size:14px;text-align:center;}
 .hidden-ph .ph-x{font-size:22px;}
@@ -157,8 +157,8 @@ input[type=file]{display:none;}
 
   <div id="s-limit" class="hide">
     <div class="flourish">&#128155;</div>
-    <h1>You&rsquo;ve shared today</h1>
-    <div class="sub">Thank you! To keep the wall full of variety it&rsquo;s one moment per day &mdash; do come back tomorrow with another.</div>
+    <h1>You&rsquo;ve shared your moment</h1>
+    <div class="sub">Thank you! It&rsquo;s one photo per guest &mdash; your moment is on the wall for everyone to enjoy.</div>
     <button class="btn" id="btnLimitWall">Browse the wall</button>
   </div>
  </div>
@@ -179,7 +179,7 @@ input[type=file]{display:none;}
   var $=function(id){return document.getElementById(id);};
 
   // Soft one-upload-per-device limit (kiosk bypasses). LIMIT_MODE: 'day' | 'once' | 'off'
-  var LIMIT_MODE='day';
+  var LIMIT_MODE='once';
   function limitKey(){ return LIMIT_MODE==='day' ? ('mw_up_'+today()) : 'mw_up'; }
   function limitReached(){ if(KIOSK||LIMIT_MODE==='off') return false; try{ return localStorage.getItem(limitKey())==='1'; }catch(_){ return false; } }
   function markUploaded(){ try{ localStorage.setItem(limitKey(),'1'); }catch(_){} }
@@ -206,12 +206,14 @@ input[type=file]{display:none;}
     $('count').textContent=photos.length+(photos.length===1?' moment shared':' moments shared');
     photos.forEach(function(p){
       var fig=document.createElement('figure'); fig.setAttribute('data-id',p.id);
-      if(ADMIN && p.hidden){                       // admin sees a placeholder (file access is revoked while hidden)
+      if(ADMIN && p.hidden){                       // admin sees the greyed image so they know what they're restoring
         fig.className='tile is-hidden';
         fig.innerHTML=
-          '<div class="hidden-ph"><span class="ph-x">&#128683;</span>Hidden from the wall<small>image access revoked</small></div>'+
+          '<span class="hidden-chip">Hidden</span>'+
+          '<img loading="lazy" src="'+thumb(p.id,700)+'" alt="Hidden moment from '+esc(p.name)+'">'+
           '<figcaption><span class="who">&mdash; '+esc(p.name)+'</span></figcaption>'+
           '<div class="tile-foot"><button class="mini hidebtn">Unhide</button></div>';
+        fig.querySelector('img').addEventListener('click',function(){ openLight(p); });
         fig.querySelector('.hidebtn').addEventListener('click',function(){ toggleHide(p); });
         grid.appendChild(fig); return;
       }
@@ -284,7 +286,12 @@ input[type=file]{display:none;}
   /* ---------- upload flow ---------- */
   function today(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   async function onFile(file){
-    if(!file) return; ustate('s-up');
+    if(!file) return;
+    if(!/^image\//.test(file.type||'') || /^video\//.test(file.type||'')){
+      alert('Only photos can be added to the wall \u2014 please choose an image, not a video.');
+      $('fileLib').value=''; $('fileCam').value=''; ustate('s-intro'); return;
+    }
+    ustate('s-up');
     try{
       var bmp=await createImageBitmap(file,{imageOrientation:'from-image'});
       var scale=Math.min(1,1600/Math.max(bmp.width,bmp.height));
